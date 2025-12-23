@@ -6,6 +6,11 @@ add_library(ps_modern_core
   src/image_document.cpp
   src/command.cpp
   src/undo_stack.cpp
+  src/tools/tool.cpp
+  src/tools/brush_tool.cpp
+  src/tools/tool_manager.cpp
+  src/rendering/viewport.cpp
+  src/rendering/canvas.cpp
   src/io/image_format.cpp
   src/io/image_io.cpp
   src/io/png_format.cpp

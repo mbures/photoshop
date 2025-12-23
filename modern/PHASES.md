@@ -3,7 +3,7 @@
 This file tracks the agreed modernization phases and current progress for the
 Linux C++/ImGui port.
 
-## Phase 1: Core engine scaffolding (in progress)
+## Phase 1: Core engine scaffolding (COMPLETED)
 
 ### 1.1 Core primitives (COMPLETED)
 - [x] Establish core types (Size, PixelFormat, ColorMode)
@@ -38,13 +38,13 @@ Linux C++/ImGui port.
 - `src/io/png_format.cpp`
 - `src/io/image_io.cpp`
 
-### 1.4 Tool interface framework (PLANNED)
-- [ ] Define Tool abstract base class with stroke methods
-- [ ] Create ToolOptions structure (size, hardness, opacity)
-- [ ] Implement BrushTool as concrete example
-- [ ] Create ToolManager for tool registration and switching
+### 1.4 Tool interface framework (COMPLETED)
+- [x] Define Tool abstract base class with stroke methods
+- [x] Create ToolOptions structure (size, hardness, opacity)
+- [x] Implement BrushTool as concrete example
+- [x] Create ToolManager for tool registration and switching
 
-**Files to create:**
+**Files created:**
 - `include/ps/tools/tool.h`
 - `include/ps/tools/brush_tool.h`
 - `include/ps/tools/tool_manager.h`
@@ -52,19 +52,19 @@ Linux C++/ImGui port.
 - `src/tools/brush_tool.cpp`
 - `src/tools/tool_manager.cpp`
 
-### 1.5 Canvas rendering hooks (PLANNED)
-- [ ] Implement Viewport class for zoom/pan and coordinate transforms
-- [ ] Create Canvas class for rendering ImageDocument to RGBA buffer
-- [ ] Add support for multiple zoom levels (1:1, fit, custom)
-- [ ] Add selection overlay rendering infrastructure
+### 1.5 Canvas rendering hooks (COMPLETED)
+- [x] Implement Viewport class for zoom/pan and coordinate transforms
+- [x] Create Canvas class for rendering ImageDocument to RGBA buffer
+- [x] Add support for multiple zoom levels (1:1, fit, custom)
+- [x] Add selection overlay rendering infrastructure
 
-**Files to create:**
+**Files created:**
 - `include/ps/rendering/canvas.h`
 - `include/ps/rendering/viewport.h`
 - `src/rendering/canvas.cpp`
 - `src/rendering/viewport.cpp`
 
-## Phase 2: Rendering + ImGui UI shell (planned)
+## Phase 2: Rendering + ImGui UI shell (NEXT)
 
 ### 2.1 ImGui application shell
 - [ ] Set up ImGui and SDL2/GLFW dependencies
