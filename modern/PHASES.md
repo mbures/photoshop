@@ -23,14 +23,14 @@ Linux C++/ImGui port.
 - `src/command.cpp`
 - `src/undo_stack.cpp`
 
-### 1.3 Image I/O service (NEXT)
-- [ ] Implement ImageFormat abstract base class
-- [ ] Create PNGFormat concrete implementation (using libpng)
-- [ ] Implement ImageIO service with format registry
-- [ ] Integrate with ImageDocument for load/save operations
-- [ ] Add libpng dependency to CMakeLists.txt
+### 1.3 Image I/O service (COMPLETED)
+- [x] Implement ImageFormat abstract base class
+- [x] Create PNGFormat concrete implementation (using libpng)
+- [x] Implement ImageIO service with format registry
+- [x] Integrate with ImageDocument for load/save operations
+- [x] Add libpng dependency to CMakeLists.txt
 
-**Files to create:**
+**Files created:**
 - `include/ps/io/image_format.h`
 - `include/ps/io/png_format.h`
 - `include/ps/io/image_io.h`
@@ -38,13 +38,13 @@ Linux C++/ImGui port.
 - `src/io/png_format.cpp`
 - `src/io/image_io.cpp`
 
-### 1.4 Tool interface framework (PLANNED)
-- [ ] Define Tool abstract base class with stroke methods
-- [ ] Create ToolOptions structure (size, hardness, opacity)
-- [ ] Implement BrushTool as concrete example
-- [ ] Create ToolManager for tool registration and switching
+### 1.4 Tool interface framework (COMPLETED)
+- [x] Define Tool abstract base class with stroke methods
+- [x] Create ToolOptions structure (size, hardness, opacity)
+- [x] Implement BrushTool as concrete example
+- [x] Create ToolManager for tool registration and switching
 
-**Files to create:**
+**Files created:**
 - `include/ps/tools/tool.h`
 - `include/ps/tools/brush_tool.h`
 - `include/ps/tools/tool_manager.h`
@@ -52,7 +52,7 @@ Linux C++/ImGui port.
 - `src/tools/brush_tool.cpp`
 - `src/tools/tool_manager.cpp`
 
-### 1.5 Canvas rendering hooks (PLANNED)
+### 1.5 Canvas rendering hooks (NEXT)
 - [ ] Implement Viewport class for zoom/pan and coordinate transforms
 - [ ] Create Canvas class for rendering ImageDocument to RGBA buffer
 - [ ] Add support for multiple zoom levels (1:1, fit, custom)
