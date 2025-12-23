@@ -11,19 +11,19 @@ Linux C++/ImGui port.
 - [x] Implement ImageDocument with channel management
 - [x] Set up CMake build infrastructure with C++17
 
-### 1.2 Command system & undo stack (NEXT)
-- [ ] Implement base Command class with execute/undo/redo interface
-- [ ] Implement UndoStack with configurable depth
-- [ ] Create ImageCommand base class for pixel operations
-- [ ] Add example commands (FillCommand, ClearCommand)
+### 1.2 Command system & undo stack (COMPLETED)
+- [x] Implement base Command class with execute/undo/redo interface
+- [x] Implement UndoStack with configurable depth
+- [x] Create ImageCommand base class for pixel operations
+- [x] Add example commands (FillCommand, ClearCommand)
 
-**Files to create:**
+**Files created:**
 - `include/ps/core/command.h`
 - `include/ps/core/undo_stack.h`
 - `src/command.cpp`
 - `src/undo_stack.cpp`
 
-### 1.3 Image I/O service (PLANNED)
+### 1.3 Image I/O service (NEXT)
 - [ ] Implement ImageFormat abstract base class
 - [ ] Create PNGFormat concrete implementation (using libpng)
 - [ ] Implement ImageIO service with format registry
