@@ -17,6 +17,8 @@ ImGui.
 - CMake 3.16+
 - A C++17-capable compiler (clang or gcc)
 - libpng development headers
+- SDL2 development headers
+- OpenGL development headers
 
 ### Configure
 
@@ -32,8 +34,11 @@ cmake --build modern/build
 
 ### Run
 
-There is no runnable UI yet. The current output is a static library target
-(`ps_modern_core`) intended for use by a future ImGui application.
+The modern build produces both the core library and a minimal ImGui shell.
+
+```sh
+./modern/build/ps_modern_app
+```
 
 ### Progress
 

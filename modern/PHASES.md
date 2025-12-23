@@ -67,10 +67,10 @@ Linux C++/ImGui port.
 ## Phase 2: Rendering + ImGui UI shell (NEXT)
 
 ### 2.1 ImGui application shell
-- [ ] Set up ImGui and SDL2/GLFW dependencies
-- [ ] Create main application window with OpenGL context
-- [ ] Implement basic menu bar (File, Edit, Image, Tools, Window)
-- [ ] Add application main loop with event handling
+- [x] Set up ImGui and SDL2/GLFW dependencies
+- [x] Create main application window with OpenGL context
+- [x] Implement basic menu bar (File, Edit, Image, Tools, Window)
+- [x] Add application main loop with event handling
 
 ### 2.2 Canvas view and navigation
 - [ ] Integrate Canvas/Viewport with ImGui rendering
