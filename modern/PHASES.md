@@ -23,14 +23,14 @@ Linux C++/ImGui port.
 - `src/command.cpp`
 - `src/undo_stack.cpp`
 
-### 1.3 Image I/O service (NEXT)
-- [ ] Implement ImageFormat abstract base class
-- [ ] Create PNGFormat concrete implementation (using libpng)
-- [ ] Implement ImageIO service with format registry
-- [ ] Integrate with ImageDocument for load/save operations
-- [ ] Add libpng dependency to CMakeLists.txt
+### 1.3 Image I/O service (COMPLETED)
+- [x] Implement ImageFormat abstract base class
+- [x] Create PNGFormat concrete implementation (using libpng)
+- [x] Implement ImageIO service with format registry
+- [x] Integrate with ImageDocument for load/save operations
+- [x] Add libpng dependency to CMakeLists.txt
 
-**Files to create:**
+**Files created:**
 - `include/ps/io/image_format.h`
 - `include/ps/io/png_format.h`
 - `include/ps/io/image_io.h`
