@@ -59,14 +59,14 @@ ps::core::ImageDocument PNGFormat::load(const std::string& path) const {
   image.version = PNG_IMAGE_VERSION;
 
   if (!png_image_begin_read_from_file(&image, path.c_str())) {
-    throw std::runtime_error(png_image_message(&image));
+    throw std::runtime_error(image.message);
   }
 
   image.format = PNG_FORMAT_RGBA;
   std::vector<png_byte> buffer(PNG_IMAGE_SIZE(image));
 
   if (!png_image_finish_read(&image, nullptr, buffer.data(), 0, nullptr)) {
-    const std::string message = png_image_message(&image);
+    const std::string message = image.message;
     png_image_free(&image);
     throw std::runtime_error(message);
   }
@@ -89,7 +89,7 @@ void PNGFormat::save(const std::string& path, const ps::core::ImageDocument& doc
   image.format = pixel_format_for_buffer(buffer.format());
 
   if (!png_image_write_to_file(&image, path.c_str(), 0, buffer.data(), 0, nullptr)) {
-    throw std::runtime_error(png_image_message(&image));
+    throw std::runtime_error(image.message);
   }
 }
 
