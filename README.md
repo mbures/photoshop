@@ -16,6 +16,7 @@ ImGui.
 
 - CMake 3.16+
 - A C++17-capable compiler (clang or gcc)
+- libpng development headers
 
 ### Configure
 
