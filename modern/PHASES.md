@@ -95,11 +95,11 @@ Linux C++/ImGui port.
 ## Phase 3: Tooling + editing workflows (planned)
 
 ### 3.1 Selection tools
-- [ ] Implement rectangular marquee tool
-- [ ] Implement elliptical marquee tool
-- [ ] Add lasso selection tool
-- [ ] Implement magic wand (color-based selection)
-- [ ] Add selection operations (invert, feather, grow/shrink)
+- [x] Implement rectangular marquee tool
+- [x] Implement elliptical marquee tool
+- [x] Add lasso selection tool
+- [x] Implement magic wand (color-based selection)
+- [x] Add selection operations (invert, feather, grow/shrink)
 
 ### 3.2 Drawing tools
 - [ ] Implement brush tool with variable size/hardness

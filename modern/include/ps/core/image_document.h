@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "ps/core/image_buffer.h"
+#include "ps/core/selection_mask.h"
 
 namespace ps::core {
 
@@ -107,10 +108,21 @@ class ImageDocument {
    */
   const ImageChannel& channel_at(std::size_t index) const;
 
+  /**
+   * @brief Returns the current selection mask
+   */
+  const SelectionMask& selection() const;
+
+  /**
+   * @brief Returns a mutable reference to the selection mask
+   */
+  SelectionMask& selection();
+
  private:
   Size size_{};
   ColorMode mode_ = ColorMode::RGB;
   std::vector<ImageChannel> channels_{};
+  SelectionMask selection_{};
 };
 
 }  // namespace ps::core
