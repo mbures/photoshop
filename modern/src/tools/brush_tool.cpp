@@ -6,6 +6,24 @@
 
 namespace ps::tools {
 
+// BrushStrokeCommand implementation
+
+BrushStrokeCommand::BrushStrokeCommand(core::ImageDocument& doc,
+                                        const Rect& affected_area)
+    : ImageCommand(doc), affected_area_(affected_area) {
+  // Save the current state of all channels BEFORE any modifications.
+  // This "before" state will be restored when undo() is called.
+  save_all_channels();
+}
+
+void BrushStrokeCommand::execute() {
+  // The brush stroke was already applied during the user's interaction
+  // (in begin_stroke/continue_stroke), so execute() doesn't need to
+  // reapply it. This command exists primarily to enable undo/redo.
+}
+
+// BrushTool implementation
+
 BrushTool::BrushTool() {
   options_.size = 10;
   options_.hardness = 100;
@@ -17,6 +35,10 @@ void BrushTool::begin_stroke(core::ImageDocument& doc, Point pt) {
   stroke_points_.clear();
   affected_area_ = Rect(pt.x, pt.y, 0, 0);
   stroke_active_ = true;
+
+  // Create the undo command BEFORE making any modifications
+  // This captures the "before" state for undo
+  current_command_ = std::make_unique<BrushStrokeCommand>(doc, affected_area_);
 
   stroke_points_.push_back({pt, 100});
   apply_brush_dab(doc, pt, 100);
@@ -35,7 +57,14 @@ std::unique_ptr<core::Command> BrushTool::end_stroke(core::ImageDocument& doc) {
   stroke_active_ = false;
   stroke_points_.clear();
 
-  return nullptr;
+  // Return the command that was created in begin_stroke()
+  // If no stroke was started (shouldn't happen), return nullptr
+  auto cmd = std::move(current_command_);
+
+  // Clear the affected area for the next stroke
+  affected_area_ = Rect(0, 0, 0, 0);
+
+  return cmd;
 }
 
 void BrushTool::apply_brush_dab(core::ImageDocument& doc, Point pt,
