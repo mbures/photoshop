@@ -12,6 +12,7 @@ add_library(ps_modern_core
   src/selection_command.cpp
   src/tools/tool.cpp
   src/tools/brush_tool.cpp
+  src/tools/drawing_tools.cpp
   src/tools/selection_tools.cpp
   src/tools/tool_manager.cpp
   src/rendering/viewport.cpp

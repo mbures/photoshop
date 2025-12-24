@@ -259,6 +259,18 @@ int main(int, char**) {
         if (ImGui::MenuItem("Brush")) {
           tool_manager.set_active_tool("brush");
         }
+        if (ImGui::MenuItem("Pencil")) {
+          tool_manager.set_active_tool("pencil");
+        }
+        if (ImGui::MenuItem("Eraser")) {
+          tool_manager.set_active_tool("eraser");
+        }
+        if (ImGui::MenuItem("Paint Bucket")) {
+          tool_manager.set_active_tool("paint_bucket");
+        }
+        if (ImGui::MenuItem("Eyedropper")) {
+          tool_manager.set_active_tool("eyedropper");
+        }
         ImGui::Separator();
         if (ImGui::MenuItem("Rectangular Marquee")) {
           tool_manager.set_active_tool("marquee_rect");
