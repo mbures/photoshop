@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <cstring>
 #include <functional>
 #include <memory>
 #include <string>
@@ -368,6 +369,105 @@ int main(int, char**) {
         }
       } else {
         ImGui::TextUnformatted("No active tool.");
+      }
+    }
+    ImGui::End();
+
+    // Layers panel
+    if (ImGui::Begin("Layers")) {
+      if (g_document) {
+        ImGui::TextUnformatted("Layers Panel");
+        ImGui::Separator();
+
+        // Layer management buttons
+        if (ImGui::Button("New Layer")) {
+          static int layer_counter = 1;
+          g_document->add_layer("Layer " + std::to_string(layer_counter++));
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Delete Layer")) {
+          if (g_document->layer_count() > 0 && g_document->active_layer_index() >= 0) {
+            g_document->remove_layer(g_document->active_layer_index());
+          }
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Convert to Layer")) {
+          if (g_document->layer_count() == 0 && !g_document->channels().empty()) {
+            g_document->channels_to_layer("Background");
+          }
+        }
+
+        ImGui::Separator();
+
+        // Display layers in reverse order (top to bottom)
+        for (int i = static_cast<int>(g_document->layer_count()) - 1; i >= 0; --i) {
+          ps::core::Layer& layer = g_document->layer_at(i);
+          const bool is_active = (i == g_document->active_layer_index());
+
+          ImGui::PushID(i);
+
+          // Layer selection
+          if (is_active) {
+            ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.35f, 0.55f, 0.9f, 0.8f));
+          }
+
+          if (ImGui::Selectable(layer.name().c_str(), is_active, 0, ImVec2(0, 30))) {
+            g_document->set_active_layer(i);
+          }
+
+          if (is_active) {
+            ImGui::PopStyleColor();
+          }
+
+          // Layer properties in the same row
+          ImGui::SameLine();
+          bool visible = layer.visible();
+          if (ImGui::Checkbox("##visible", &visible)) {
+            layer.set_visible(visible);
+          }
+          if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Visibility");
+          }
+
+          // Layer details (when selected)
+          if (is_active) {
+            ImGui::Indent();
+
+            // Opacity slider
+            int opacity = layer.opacity();
+            if (ImGui::SliderInt("Opacity", &opacity, 0, 100)) {
+              layer.set_opacity(opacity);
+            }
+
+            // Blend mode combo
+            const char* blend_mode_names[] = {
+              "Normal", "Multiply", "Screen", "Overlay",
+              "Darken", "Lighten", "Color Dodge", "Color Burn",
+              "Hard Light", "Soft Light", "Difference", "Exclusion"
+            };
+            int blend_mode_index = static_cast<int>(layer.blend_mode());
+            if (ImGui::Combo("Blend Mode", &blend_mode_index, blend_mode_names, 12)) {
+              layer.set_blend_mode(static_cast<ps::core::BlendMode>(blend_mode_index));
+            }
+
+            // Layer name editing
+            char name_buffer[128];
+            strncpy(name_buffer, layer.name().c_str(), sizeof(name_buffer) - 1);
+            name_buffer[sizeof(name_buffer) - 1] = '\0';
+            if (ImGui::InputText("Name", name_buffer, sizeof(name_buffer))) {
+              layer.set_name(name_buffer);
+            }
+
+            ImGui::Unindent();
+          }
+
+          ImGui::PopID();
+        }
+
+        ImGui::Separator();
+        ImGui::Text("Total layers: %zu", g_document->layer_count());
+      } else {
+        ImGui::TextUnformatted("No document loaded.");
       }
     }
     ImGui::End();

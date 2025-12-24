@@ -227,10 +227,12 @@ class Canvas {
   void render_background(CanvasBuffer& buffer);
   void render_checkerboard(CanvasBuffer& buffer, int checker_size = 8);
   void render_image(const core::ImageDocument& doc, CanvasBuffer& buffer);
+  void render_layers(const core::ImageDocument& doc, CanvasBuffer& buffer);
   void render_selection_overlay(CanvasBuffer& buffer,
                                 const SelectionOverlay& overlay);
 
   RGBAPixel sample_image(const core::ImageDocument& doc, float x, float y);
+  RGBAPixel sample_layer(const core::Layer& layer, float x, float y);
   RGBAPixel blend_pixels(RGBAPixel bottom, RGBAPixel top);
 };
 

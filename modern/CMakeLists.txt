@@ -10,6 +10,9 @@ add_library(ps_modern_core
   src/undo_stack.cpp
   src/selection_mask.cpp
   src/selection_command.cpp
+  src/layer.cpp
+  src/layer_blend.cpp
+  src/channel_operations.cpp
   src/tools/tool.cpp
   src/tools/brush_tool.cpp
   src/tools/drawing_tools.cpp

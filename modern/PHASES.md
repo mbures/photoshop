@@ -108,11 +108,41 @@ Linux C++/ImGui port.
 - [x] Implement paint bucket (fill) tool
 - [x] Add eyedropper (color picker) tool
 
-### 3.3 Channel and layer support
-- [ ] Extend ImageDocument for multiple layers
-- [ ] Implement layer blending modes
-- [ ] Add channel splitting/merging operations
-- [ ] Create layers panel UI
+### 3.3 Channel and layer support (COMPLETED)
+- [x] Extend ImageDocument for multiple layers
+- [x] Implement layer blending modes
+- [x] Add channel splitting/merging operations
+- [x] Create layers panel UI
+
+**Implementation details:**
+- Created Layer class with RGBA8 buffer, opacity, visibility, and blend mode properties
+- Implemented 12 blend modes (Normal, Multiply, Screen, Overlay, Darken, Lighten, Color Dodge, Color Burn, Hard Light, Soft Light, Difference, Exclusion)
+- Extended ImageDocument with layer management methods (add_layer, remove_layer, move_layer, set_active_layer)
+- Added layer-based rendering in Canvas with proper blend mode compositing
+- Implemented channel splitting/merging operations for converting between layers and channels
+- Created comprehensive Layers panel UI with:
+  - Layer list showing all layers (top to bottom order)
+  - Layer selection and activation
+  - Visibility toggles
+  - Opacity sliders
+  - Blend mode selection
+  - Layer name editing
+  - New/Delete layer buttons
+  - Convert channels to layer functionality
+
+**Files created/modified:**
+- `include/ps/core/layer.h` - Layer class definition
+- `src/layer.cpp` - Layer implementation
+- `include/ps/core/layer_blend.h` - Blend mode functions
+- `src/layer_blend.cpp` - Blend mode implementations
+- `include/ps/core/channel_operations.h` - Channel split/merge operations
+- `src/channel_operations.cpp` - Channel operations implementation
+- `include/ps/core/image_document.h` - Extended with layer support
+- `src/image_document.cpp` - Layer management implementation
+- `include/ps/rendering/canvas.h` - Added layer rendering support
+- `src/rendering/canvas.cpp` - Layer compositing implementation
+- `src/app/main.cpp` - Added Layers panel UI
+- `CMakeLists.txt` - Added new source files
 
 ### 3.4 File format support
 - [ ] Add TIFF format support (with LZW compression)
