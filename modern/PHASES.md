@@ -102,11 +102,11 @@ Linux C++/ImGui port.
 - [x] Add selection operations (invert, feather, grow/shrink)
 
 ### 3.2 Drawing tools
-- [ ] Implement brush tool with variable size/hardness
-- [ ] Add pencil tool (hard-edged drawing)
-- [ ] Create eraser tool
-- [ ] Implement paint bucket (fill) tool
-- [ ] Add eyedropper (color picker) tool
+- [x] Implement brush tool with variable size/hardness
+- [x] Add pencil tool (hard-edged drawing)
+- [x] Create eraser tool
+- [x] Implement paint bucket (fill) tool
+- [x] Add eyedropper (color picker) tool
 
 ### 3.3 Channel and layer support
 - [ ] Extend ImageDocument for multiple layers

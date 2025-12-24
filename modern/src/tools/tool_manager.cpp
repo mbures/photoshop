@@ -1,6 +1,7 @@
 #include "ps/tools/tool_manager.h"
 
 #include "ps/tools/brush_tool.h"
+#include "ps/tools/drawing_tools.h"
 #include "ps/tools/selection_tools.h"
 
 namespace ps::tools {
@@ -51,6 +52,10 @@ std::vector<std::string> ToolManager::tool_ids() const {
 
 void ToolManager::register_default_tools() {
   register_tool("brush", std::make_unique<BrushTool>());
+  register_tool("pencil", std::make_unique<PencilTool>());
+  register_tool("eraser", std::make_unique<EraserTool>());
+  register_tool("paint_bucket", std::make_unique<PaintBucketTool>());
+  register_tool("eyedropper", std::make_unique<EyedropperTool>());
   register_tool("marquee_rect", std::make_unique<RectangularMarqueeTool>());
   register_tool("marquee_ellipse", std::make_unique<EllipticalMarqueeTool>());
   register_tool("lasso", std::make_unique<LassoSelectionTool>());
