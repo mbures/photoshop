@@ -362,7 +362,25 @@ int main(int, char**) {
 
     // Canvas window with zoom controls and rendering
     if (ImGui::Begin("Canvas", nullptr,
-                     ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse)) {
+                     ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoMove)) {
+      // Manual title bar dragging implementation
+      // Allow window to be moved by dragging the title bar area
+      const ImVec2 window_pos = ImGui::GetWindowPos();
+      const ImVec2 title_bar_min = window_pos;
+      const ImVec2 title_bar_max = ImVec2(window_pos.x + ImGui::GetWindowWidth(),
+                                           window_pos.y + ImGui::GetFrameHeight());
+      const ImVec2 mouse_pos = ImGui::GetMousePos();
+
+      // Check if mouse is in title bar area and handle dragging
+      if (mouse_pos.x >= title_bar_min.x && mouse_pos.x <= title_bar_max.x &&
+          mouse_pos.y >= title_bar_min.y && mouse_pos.y <= title_bar_max.y) {
+        if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
+          const ImVec2 delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
+          ImGui::SetWindowPos(ImVec2(window_pos.x + delta.x, window_pos.y + delta.y));
+          ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
+        }
+      }
+
       // Toolbar with zoom controls
       ImGui::BeginGroup();
       if (ImGui::Button("Zoom In")) {
