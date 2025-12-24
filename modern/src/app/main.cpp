@@ -362,7 +362,7 @@ int main(int, char**) {
 
     // Canvas window with zoom controls and rendering
     if (ImGui::Begin("Canvas", nullptr,
-                     ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse)) {
+                     ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoMove)) {
       // Toolbar with zoom controls
       ImGui::BeginGroup();
       if (ImGui::Button("Zoom In")) {
