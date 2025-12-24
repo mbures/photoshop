@@ -71,16 +71,44 @@ void Canvas::render_image(const core::ImageDocument& doc, CanvasBuffer& buffer) 
 
 void Canvas::render_selection_overlay(CanvasBuffer& buffer,
                                       const SelectionOverlay& overlay) {
-  // Simple animated marching ants effect
-  // In a real implementation, this would use a selection mask
-  // For now, just demonstrate the overlay capability
+  if (!overlay.mask) {
+    return;
+  }
 
+  const core::SelectionMask& mask = *overlay.mask;
+  if (!mask.has_selection()) {
+    return;
+  }
+
+  const core::Size mask_size = mask.size();
   const int frame_offset = overlay.animation_frame % 8;
 
   for (int y = 0; y < buffer.height; ++y) {
     for (int x = 0; x < buffer.width; ++x) {
-      const bool show_pixel = ((x + y + frame_offset) / 4) % 2 == 0;
+      const ViewportPoint vp(static_cast<float>(x), static_cast<float>(y));
+      const ImagePoint ip = viewport_.viewport_to_image(vp);
+      const int ix = static_cast<int>(std::floor(ip.x));
+      const int iy = static_cast<int>(std::floor(ip.y));
 
+      if (ix < 0 || iy < 0 || ix >= mask_size.width || iy >= mask_size.height) {
+        continue;
+      }
+
+      if (!mask.is_selected(ix, iy)) {
+        continue;
+      }
+
+      const bool edge =
+          !mask.is_selected(ix - 1, iy) ||
+          !mask.is_selected(ix + 1, iy) ||
+          !mask.is_selected(ix, iy - 1) ||
+          !mask.is_selected(ix, iy + 1);
+
+      if (!edge) {
+        continue;
+      }
+
+      const bool show_pixel = ((ix + iy + frame_offset) / 4) % 2 == 0;
       if (show_pixel) {
         const RGBAPixel bg = buffer.at(x, y);
         buffer.at(x, y) = blend_pixels(bg, overlay.color);

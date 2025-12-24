@@ -7,11 +7,13 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "ps/core/image_document.h"
+#include "ps/core/selection_command.h"
 #include "ps/core/undo_stack.h"
 #include "ps/rendering/canvas.h"
 #include "ps/rendering/viewport.h"
@@ -28,6 +30,7 @@ std::unique_ptr<ps::rendering::Canvas> g_canvas;
 ps::rendering::CanvasBuffer g_render_buffer;
 GLuint g_texture_id = 0;
 bool g_is_drawing = false;
+int g_selection_frame = 0;
 
 std::size_t document_memory_usage(const ps::core::ImageDocument& doc) {
   std::size_t total_bytes = 0;
@@ -115,6 +118,17 @@ void cleanup_canvas() {
   g_document.reset();
   g_undo_stack.reset();
   g_canvas.reset();
+}
+
+void apply_selection_change(ps::core::ImageDocument& doc,
+                            ps::core::UndoStack& undo_stack,
+                            const char* label,
+                            const std::function<void(ps::core::SelectionMask&)>& op) {
+  ps::core::SelectionMask before = doc.selection();
+  ps::core::SelectionMask after = before;
+  op(after);
+  undo_stack.push(std::make_unique<ps::core::SelectionCommand>(
+      doc, std::move(before), std::move(after), label));
 }
 }
 
@@ -214,10 +228,50 @@ int main(int, char**) {
         ImGui::MenuItem("Image Size...", nullptr, false, false);
         ImGui::EndMenu();
       }
+      if (ImGui::BeginMenu("Select")) {
+        if (g_document && g_undo_stack) {
+          if (ImGui::MenuItem("Invert")) {
+            apply_selection_change(*g_document, *g_undo_stack, "Invert Selection",
+                                   [](ps::core::SelectionMask& mask) { mask.invert(); });
+          }
+          if (ImGui::MenuItem("Feather (3px)")) {
+            apply_selection_change(*g_document, *g_undo_stack, "Feather Selection",
+                                   [](ps::core::SelectionMask& mask) { mask.feather(3); });
+          }
+          if (ImGui::MenuItem("Grow (3px)")) {
+            apply_selection_change(*g_document, *g_undo_stack, "Grow Selection",
+                                   [](ps::core::SelectionMask& mask) { mask.grow(3); });
+          }
+          if (ImGui::MenuItem("Shrink (3px)")) {
+            apply_selection_change(*g_document, *g_undo_stack, "Shrink Selection",
+                                   [](ps::core::SelectionMask& mask) { mask.shrink(3); });
+          }
+        } else {
+          ImGui::MenuItem("Invert", nullptr, false, false);
+          ImGui::MenuItem("Feather", nullptr, false, false);
+          ImGui::MenuItem("Grow", nullptr, false, false);
+          ImGui::MenuItem("Shrink", nullptr, false, false);
+        }
+        ImGui::EndMenu();
+      }
       if (ImGui::BeginMenu("Tools")) {
-        ImGui::MenuItem("Brush", nullptr, false, false);
-        ImGui::MenuItem("Eraser", nullptr, false, false);
-        ImGui::MenuItem("Marquee", nullptr, false, false);
+        auto& tool_manager = ps::tools::ToolManager::instance();
+        if (ImGui::MenuItem("Brush")) {
+          tool_manager.set_active_tool("brush");
+        }
+        ImGui::Separator();
+        if (ImGui::MenuItem("Rectangular Marquee")) {
+          tool_manager.set_active_tool("marquee_rect");
+        }
+        if (ImGui::MenuItem("Elliptical Marquee")) {
+          tool_manager.set_active_tool("marquee_ellipse");
+        }
+        if (ImGui::MenuItem("Lasso")) {
+          tool_manager.set_active_tool("lasso");
+        }
+        if (ImGui::MenuItem("Magic Wand")) {
+          tool_manager.set_active_tool("magic_wand");
+        }
         ImGui::EndMenu();
       }
       if (ImGui::BeginMenu("Window")) {
@@ -345,7 +399,12 @@ int main(int, char**) {
         g_render_buffer.resize(static_cast<int>(canvas_size.x),
                               static_cast<int>(canvas_size.y));
 
-        g_canvas->render(*g_document, g_render_buffer);
+        ps::rendering::SelectionOverlay overlay;
+        overlay.enabled = g_document->selection().has_selection();
+        overlay.mask = &g_document->selection();
+        overlay.animation_frame = g_selection_frame++;
+
+        g_canvas->render_with_overlay(*g_document, g_render_buffer, overlay);
         update_canvas_texture();
 
         if (g_texture_id) {

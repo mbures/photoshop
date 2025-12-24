@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "ps/core/image_document.h"
+#include "ps/core/selection_mask.h"
 #include "ps/rendering/viewport.h"
 
 namespace ps::rendering {
@@ -116,6 +117,7 @@ struct SelectionOverlay {
   bool enabled = false;                   ///< Whether overlay is visible
   RGBAPixel color{255, 255, 255, 128};    ///< Overlay color
   int animation_frame = 0;                ///< Animation frame counter
+  const core::SelectionMask* mask = nullptr; ///< Selection mask to render
 };
 
 /**
