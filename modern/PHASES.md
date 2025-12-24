@@ -72,11 +72,19 @@ Linux C++/ImGui port.
 - [x] Implement basic menu bar (File, Edit, Image, Tools, Window)
 - [x] Add application main loop with event handling
 
-### 2.2 Canvas view and navigation
-- [ ] Integrate Canvas/Viewport with ImGui rendering
-- [ ] Implement zoom controls (zoom in/out, fit to window, 100%)
-- [ ] Add pan navigation (hand tool, spacebar modifier)
-- [ ] Display image coordinates and zoom level in status bar
+### 2.2 Canvas view and navigation (COMPLETED)
+- [x] Integrate Canvas/Viewport with ImGui rendering
+- [x] Implement zoom controls (zoom in/out, fit to window, 100%)
+- [x] Add pan navigation (hand tool, spacebar modifier)
+- [x] Display image coordinates and zoom level in status bar
+
+**Implementation details:**
+- Canvas window with OpenGL texture rendering integrated into main.cpp
+- Zoom toolbar with buttons (Zoom In, Zoom Out, 100%, Fit) and keyboard shortcuts (Ctrl+Plus, Ctrl+Minus, Ctrl+0)
+- Mouse wheel zoom with Ctrl modifier
+- Pan navigation using spacebar+drag or middle mouse button
+- Status bar displaying document size, image coordinates, and zoom level
+- Tool integration with viewport coordinate transforms
 
 ### 2.3 Tool palette and status UI
 - [ ] Create tool palette window with tool icons
