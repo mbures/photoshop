@@ -5,7 +5,11 @@
 #include "imgui_impl_opengl2.h"
 #include "imgui_impl_sdl2.h"
 
+#include <algorithm>
+#include <cstdio>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "ps/core/image_document.h"
 #include "ps/core/undo_stack.h"
@@ -24,6 +28,33 @@ std::unique_ptr<ps::rendering::Canvas> g_canvas;
 ps::rendering::CanvasBuffer g_render_buffer;
 GLuint g_texture_id = 0;
 bool g_is_drawing = false;
+
+std::size_t document_memory_usage(const ps::core::ImageDocument& doc) {
+  std::size_t total_bytes = 0;
+  for (const auto& channel : doc.channels()) {
+    total_bytes += channel.buffer.byte_size();
+  }
+  return total_bytes;
+}
+
+std::string format_bytes(std::size_t bytes) {
+  static const char* kUnits[] = {"B", "KB", "MB", "GB"};
+  double size = static_cast<double>(bytes);
+  int unit_index = 0;
+
+  while (size >= 1024.0 && unit_index < 3) {
+    size /= 1024.0;
+    ++unit_index;
+  }
+
+  char buffer[32];
+  if (unit_index == 0) {
+    std::snprintf(buffer, sizeof(buffer), "%zu %s", bytes, kUnits[unit_index]);
+  } else {
+    std::snprintf(buffer, sizeof(buffer), "%.1f %s", size, kUnits[unit_index]);
+  }
+  return std::string(buffer);
+}
 
 void create_test_image() {
   g_document = std::make_unique<ps::core::ImageDocument>(
@@ -198,6 +229,83 @@ int main(int, char**) {
       ImGui::EndMainMenuBar();
     }
 
+    if (ImGui::Begin("Tools")) {
+      auto& tool_manager = ps::tools::ToolManager::instance();
+      std::vector<std::string> tool_ids = tool_manager.tool_ids();
+      std::sort(tool_ids.begin(), tool_ids.end());
+
+      ImGui::TextUnformatted("Tool Palette");
+      ImGui::Separator();
+
+      const int columns = 2;
+      ImGui::Columns(columns, nullptr, false);
+
+      for (const auto& id : tool_ids) {
+        ps::tools::Tool* tool = tool_manager.get_tool(id);
+        if (!tool) {
+          continue;
+        }
+
+        const bool is_active = tool == tool_manager.active_tool();
+        const std::string name = tool->name().empty() ? id : tool->name();
+        const std::string icon_label = name.substr(0, 1);
+
+        if (is_active) {
+          ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.35f, 0.55f, 0.9f, 1.0f));
+          ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.65f, 1.0f, 1.0f));
+          ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.25f, 0.45f, 0.8f, 1.0f));
+        }
+
+        if (ImGui::Button((icon_label + "##" + id).c_str(), ImVec2(40, 40))) {
+          tool_manager.set_active_tool(id);
+        }
+
+        if (is_active) {
+          ImGui::PopStyleColor(3);
+        }
+
+        if (ImGui::IsItemHovered()) {
+          ImGui::SetTooltip("%s", name.c_str());
+        }
+
+        ImGui::NextColumn();
+      }
+
+      ImGui::Columns(1);
+    }
+    ImGui::End();
+
+    if (ImGui::Begin("Tool Options")) {
+      ps::tools::Tool* active_tool = ps::tools::ToolManager::instance().active_tool();
+      if (active_tool) {
+        ps::tools::ToolOptions options = active_tool->options();
+        bool changed = false;
+
+        ImGui::Text("Active: %s", active_tool->name().c_str());
+        ImGui::Separator();
+
+        changed |= ImGui::SliderInt("Size", &options.size, 1, 200);
+        changed |= ImGui::SliderInt("Hardness", &options.hardness, 0, 100);
+        changed |= ImGui::SliderInt("Opacity", &options.opacity, 0, 100);
+        changed |= ImGui::SliderInt("Spacing", &options.spacing, 0, 100);
+        changed |= ImGui::SliderInt("Fadeout", &options.fadeout, 0, 1000);
+
+        const char* blend_labels[] = {"Normal", "Color Only", "Darken Only", "Lighten Only"};
+        int blend_index = static_cast<int>(options.blend_mode);
+        if (ImGui::Combo("Blend Mode", &blend_index, blend_labels, 4)) {
+          options.blend_mode = static_cast<ps::tools::BlendMode>(blend_index);
+          changed = true;
+        }
+
+        if (changed) {
+          active_tool->set_options(options);
+        }
+      } else {
+        ImGui::TextUnformatted("No active tool.");
+      }
+    }
+    ImGui::End();
+
     // Canvas window with zoom controls and rendering
     if (ImGui::Begin("Canvas", nullptr,
                      ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse)) {
@@ -335,6 +443,8 @@ int main(int, char**) {
         const ps::rendering::ImagePoint ip = g_canvas->viewport().viewport_to_image(vp);
 
         ImGui::Text("Document: %dx%d", g_document->size().width, g_document->size().height);
+        ImGui::SameLine();
+        ImGui::Text("| Memory: %s", format_bytes(document_memory_usage(*g_document)).c_str());
         ImGui::SameLine();
         ImGui::Text("| Image: (%.0f, %.0f)", ip.x, ip.y);
         ImGui::SameLine();

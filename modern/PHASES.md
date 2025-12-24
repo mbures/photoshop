@@ -87,10 +87,10 @@ Linux C++/ImGui port.
 - Tool integration with viewport coordinate transforms
 
 ### 2.3 Tool palette and status UI
-- [ ] Create tool palette window with tool icons
-- [ ] Implement tool selection and highlighting
-- [ ] Add tool options panel (size, hardness, opacity sliders)
-- [ ] Display status information (document size, memory usage)
+- [x] Create tool palette window with tool icons
+- [x] Implement tool selection and highlighting
+- [x] Add tool options panel (size, hardness, opacity sliders)
+- [x] Display status information (document size, memory usage)
 
 ## Phase 3: Tooling + editing workflows (planned)
 
