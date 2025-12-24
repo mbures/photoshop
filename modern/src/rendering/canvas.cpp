@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include "ps/core/layer_blend.h"
+
 namespace ps::rendering {
 
 Canvas::Canvas() : viewport_() {}
@@ -54,6 +56,13 @@ void Canvas::render_image(const core::ImageDocument& doc, CanvasBuffer& buffer) 
     return;
   }
 
+  // Use layer-based rendering if layers exist
+  if (doc.layer_count() > 0) {
+    render_layers(doc, buffer);
+    return;
+  }
+
+  // Fall back to channel-based rendering
   for (int y = 0; y < buffer.height; ++y) {
     for (int x = 0; x < buffer.width; ++x) {
       const ViewportPoint vp(static_cast<float>(x), static_cast<float>(y));
@@ -65,6 +74,52 @@ void Canvas::render_image(const core::ImageDocument& doc, CanvasBuffer& buffer) 
         const RGBAPixel bg = buffer.at(x, y);
         buffer.at(x, y) = blend_pixels(bg, sampled);
       }
+    }
+  }
+}
+
+void Canvas::render_layers(const core::ImageDocument& doc, CanvasBuffer& buffer) {
+  const core::Size doc_size = doc.size();
+
+  for (int y = 0; y < buffer.height; ++y) {
+    for (int x = 0; x < buffer.width; ++x) {
+      const ViewportPoint vp(static_cast<float>(x), static_cast<float>(y));
+      const ImagePoint ip = viewport_.viewport_to_image(vp);
+
+      if (ip.x < 0 || ip.x >= doc_size.width ||
+          ip.y < 0 || ip.y >= doc_size.height) {
+        continue;
+      }
+
+      RGBAPixel composite = buffer.at(x, y);
+
+      // Composite all visible layers from bottom to top
+      for (std::size_t i = 0; i < doc.layer_count(); ++i) {
+        const core::Layer& layer = doc.layer_at(i);
+
+        if (!layer.visible()) {
+          continue;
+        }
+
+        const RGBAPixel layer_pixel = sample_layer(layer, ip.x, ip.y);
+
+        // Apply layer blending
+        std::uint8_t r = composite.r;
+        std::uint8_t g = composite.g;
+        std::uint8_t b = composite.b;
+        std::uint8_t a = composite.a;
+
+        core::blend_pixel(
+          layer_pixel.r, layer_pixel.g, layer_pixel.b, layer_pixel.a,
+          r, g, b, a,
+          layer.opacity(),
+          layer.blend_mode()
+        );
+
+        composite = RGBAPixel(r, g, b, a);
+      }
+
+      buffer.at(x, y) = composite;
     }
   }
 }
@@ -115,6 +170,24 @@ void Canvas::render_selection_overlay(CanvasBuffer& buffer,
       }
     }
   }
+}
+
+RGBAPixel Canvas::sample_layer(const core::Layer& layer, float x, float y) {
+  const core::Size layer_size = layer.size();
+  const int ix = std::clamp(static_cast<int>(x), 0, layer_size.width - 1);
+  const int iy = std::clamp(static_cast<int>(y), 0, layer_size.height - 1);
+
+  const int pixel_index = iy * layer_size.width + ix;
+  const int byte_index = pixel_index * 4;  // RGBA8 format
+
+  const std::uint8_t* data = layer.buffer().data();
+
+  return RGBAPixel(
+    data[byte_index],      // R
+    data[byte_index + 1],  // G
+    data[byte_index + 2],  // B
+    data[byte_index + 3]   // A
+  );
 }
 
 RGBAPixel Canvas::sample_image(const core::ImageDocument& doc, float x, float y) {
