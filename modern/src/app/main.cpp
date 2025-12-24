@@ -72,7 +72,7 @@ int main(int, char**) {
     }
 
     ImGui_ImplOpenGL2_NewFrame();
-    ImGui_ImplSDL2_NewFrame(window);
+    ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
 
     if (ImGui::BeginMainMenuBar()) {
