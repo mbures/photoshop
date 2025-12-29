@@ -145,10 +145,10 @@ Linux C++/ImGui port.
 - `CMakeLists.txt` - Added new source files
 
 ### 3.4 File format support
-- [ ] Add TIFF format support (with LZW compression)
-- [ ] Implement basic PSD format support (read/write)
-- [ ] Add JPEG format support
-- [ ] Support common formats (BMP, GIF)
+- [x] Add TIFF format support (with LZW compression)
+- [x] Implement basic PSD format support (read/write)
+- [x] Add JPEG format support
+- [x] Support common formats (BMP, GIF)
 
 ## Phase 4: Parity + polish (planned)
 
