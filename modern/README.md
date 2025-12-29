@@ -168,13 +168,14 @@ The port is being developed in phases. See [PHASES.md](PHASES.md) for details.
 - CMake 3.16+
 - C++17-capable compiler (GCC 7+ or Clang 5+)
 - libpng development headers
+- libtiff development headers
 - SDL2 development headers
 - OpenGL development headers
 
 ### Ubuntu/Debian
 
 ```bash
-sudo apt-get install cmake build-essential libpng-dev libsdl2-dev libgl1-mesa-dev
+sudo apt-get install cmake build-essential libpng-dev libtiff-dev libsdl2-dev libgl1-mesa-dev
 ```
 
 ### Build Steps
