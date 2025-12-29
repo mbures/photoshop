@@ -2,7 +2,12 @@
 
 #include <stdexcept>
 
+#include "ps/io/bmp_format.h"
+#include "ps/io/gif_format.h"
+#include "ps/io/jpeg_format.h"
 #include "ps/io/png_format.h"
+#include "ps/io/psd_format.h"
+#include "ps/io/tiff_format.h"
 
 namespace ps::io {
 
@@ -34,6 +39,11 @@ void ImageIO::save(const std::string& path, const ps::core::ImageDocument& docum
 
 ImageIO create_default_image_io() {
   ImageIO io;
+  io.register_format(std::make_unique<TIFFFormat>());
+  io.register_format(std::make_unique<PSDFormat>());
+  io.register_format(std::make_unique<JPEGFormat>());
+  io.register_format(std::make_unique<BMPFormat>());
+  io.register_format(std::make_unique<GIFFormat>());
   io.register_format(std::make_unique<PNGFormat>());
   return io;
 }

@@ -22,10 +22,17 @@ add_library(ps_modern_core
   src/rendering/canvas.cpp
   src/io/image_format.cpp
   src/io/image_io.cpp
+  src/io/bmp_format.cpp
+  src/io/gif_format.cpp
+  src/io/jpeg_format.cpp
   src/io/png_format.cpp
+  src/io/psd_format.cpp
+  src/io/tiff_format.cpp
 )
 
 find_package(PNG REQUIRED)
+find_package(TIFF REQUIRED)
+find_package(JPEG REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(SDL2 REQUIRED)
 
@@ -56,11 +63,12 @@ target_link_libraries(ps_imgui PUBLIC SDL2::SDL2 OpenGL::GL)
 
 target_include_directories(ps_modern_core PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/third_party>
 )
 
 target_compile_features(ps_modern_core PUBLIC cxx_std_17)
 
-target_link_libraries(ps_modern_core PUBLIC PNG::PNG)
+target_link_libraries(ps_modern_core PUBLIC PNG::PNG TIFF::TIFF JPEG::JPEG)
 
 add_executable(ps_modern_app
   src/app/main.cpp
