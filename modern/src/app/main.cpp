@@ -16,9 +16,14 @@
 #include "ps/core/image_document.h"
 #include "ps/core/selection_command.h"
 #include "ps/core/undo_stack.h"
+#include "ps/io/image_io.h"
 #include "ps/rendering/canvas.h"
 #include "ps/rendering/viewport.h"
 #include "ps/tools/tool_manager.h"
+
+#include <dirent.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 namespace {
 constexpr int kWindowWidth = 1280;
@@ -32,6 +37,15 @@ ps::rendering::CanvasBuffer g_render_buffer;
 GLuint g_texture_id = 0;
 bool g_is_drawing = false;
 int g_selection_frame = 0;
+
+// File I/O state
+ps::io::ImageIO g_image_io;
+std::string g_current_file_path;
+bool g_show_open_dialog = false;
+bool g_show_save_dialog = false;
+std::string g_current_directory;
+std::vector<std::string> g_directory_entries;
+int g_selected_file_index = -1;
 
 std::size_t document_memory_usage(const ps::core::ImageDocument& doc) {
   std::size_t total_bytes = 0;
@@ -131,6 +145,219 @@ void apply_selection_change(ps::core::ImageDocument& doc,
   undo_stack.push(std::make_unique<ps::core::SelectionCommand>(
       doc, std::move(before), std::move(after), label));
 }
+
+void refresh_directory_listing() {
+  g_directory_entries.clear();
+  g_selected_file_index = -1;
+
+  DIR* dir = opendir(g_current_directory.c_str());
+  if (!dir) {
+    return;
+  }
+
+  struct dirent* entry;
+  while ((entry = readdir(dir)) != nullptr) {
+    std::string name = entry->d_name;
+    if (name == ".") {
+      continue;
+    }
+    g_directory_entries.push_back(name);
+  }
+  closedir(dir);
+
+  std::sort(g_directory_entries.begin(), g_directory_entries.end());
+}
+
+bool is_directory(const std::string& path) {
+  struct stat st;
+  if (stat(path.c_str(), &st) != 0) {
+    return false;
+  }
+  return S_ISDIR(st.st_mode);
+}
+
+std::string get_file_extension(const std::string& path) {
+  const size_t dot_pos = path.find_last_of('.');
+  if (dot_pos == std::string::npos) {
+    return "";
+  }
+  std::string ext = path.substr(dot_pos + 1);
+  std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+  return ext;
+}
+
+bool is_supported_image_file(const std::string& path) {
+  const std::string ext = get_file_extension(path);
+  return ext == "png" || ext == "jpg" || ext == "jpeg" ||
+         ext == "tif" || ext == "tiff" || ext == "bmp" ||
+         ext == "gif" || ext == "psd";
+}
+
+void open_file(const std::string& path) {
+  try {
+    g_document = std::make_unique<ps::core::ImageDocument>(g_image_io.load(path));
+    g_current_file_path = path;
+    g_undo_stack->clear();
+
+    if (g_canvas) {
+      g_canvas->viewport().set_viewport_size(ps::rendering::ViewportSize(800, 600));
+      g_canvas->viewport().center_on_image(g_document->size());
+    }
+  } catch (const std::exception& e) {
+    fprintf(stderr, "Failed to open file: %s\n", e.what());
+  }
+}
+
+void save_file(const std::string& path) {
+  if (!g_document) {
+    return;
+  }
+
+  try {
+    g_image_io.save(path, *g_document);
+    g_current_file_path = path;
+  } catch (const std::exception& e) {
+    fprintf(stderr, "Failed to save file: %s\n", e.what());
+  }
+}
+
+void new_document(int width, int height) {
+  g_document = std::make_unique<ps::core::ImageDocument>(
+      ps::core::Size{width, height}, ps::core::ColorMode::RGB);
+
+  g_document->add_channel("Red", ps::core::PixelFormat::RGB8);
+  g_document->add_channel("Green", ps::core::PixelFormat::RGB8);
+  g_document->add_channel("Blue", ps::core::PixelFormat::RGB8);
+
+  // Fill with white
+  for (auto& channel : g_document->channels()) {
+    std::fill(channel.buffer.data(),
+              channel.buffer.data() + channel.buffer.byte_size(),
+              255);
+  }
+
+  g_current_file_path.clear();
+  g_undo_stack->clear();
+
+  if (g_canvas) {
+    g_canvas->viewport().set_viewport_size(ps::rendering::ViewportSize(800, 600));
+    g_canvas->viewport().center_on_image(g_document->size());
+  }
+}
+
+void show_file_dialog(bool is_save) {
+  if (g_current_directory.empty()) {
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) != nullptr) {
+      g_current_directory = cwd;
+    } else {
+      g_current_directory = "/home";
+    }
+    refresh_directory_listing();
+  }
+
+  ImGui::OpenPopup(is_save ? "Save File" : "Open File");
+
+  ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+  ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+  ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_Appearing);
+
+  if (ImGui::BeginPopupModal(is_save ? "Save File" : "Open File", nullptr,
+                             ImGuiWindowFlags_NoResize)) {
+    ImGui::Text("Directory: %s", g_current_directory.c_str());
+    ImGui::Separator();
+
+    // File list
+    if (ImGui::BeginChild("FileList", ImVec2(0, -40), true)) {
+      for (size_t i = 0; i < g_directory_entries.size(); ++i) {
+        const std::string& name = g_directory_entries[i];
+        const std::string full_path = g_current_directory + "/" + name;
+        const bool is_dir = is_directory(full_path);
+
+        // Skip files that aren't images or directories in open mode
+        if (!is_save && !is_dir && !is_supported_image_file(name)) {
+          continue;
+        }
+
+        const bool is_selected = (static_cast<int>(i) == g_selected_file_index);
+        const std::string label = is_dir ? "[DIR] " + name : name;
+
+        if (ImGui::Selectable(label.c_str(), is_selected, ImGuiSelectableFlags_AllowDoubleClick)) {
+          g_selected_file_index = static_cast<int>(i);
+
+          if (ImGui::IsMouseDoubleClicked(0)) {
+            if (is_dir) {
+              if (name == "..") {
+                size_t last_slash = g_current_directory.find_last_of('/');
+                if (last_slash != std::string::npos && last_slash > 0) {
+                  g_current_directory = g_current_directory.substr(0, last_slash);
+                }
+              } else {
+                g_current_directory = full_path;
+              }
+              refresh_directory_listing();
+            } else if (!is_save) {
+              // Double-click on file in open mode = open it
+              open_file(full_path);
+              ImGui::CloseCurrentPopup();
+              if (is_save) {
+                g_show_save_dialog = false;
+              } else {
+                g_show_open_dialog = false;
+              }
+            }
+          }
+        }
+      }
+    }
+    ImGui::EndChild();
+
+    ImGui::Separator();
+
+    // File name input for save mode
+    static char filename_buffer[256] = "";
+    if (is_save) {
+      ImGui::InputText("Filename", filename_buffer, sizeof(filename_buffer));
+      ImGui::SameLine();
+    }
+
+    // Buttons
+    if (ImGui::Button(is_save ? "Save" : "Open", ImVec2(120, 0))) {
+      if (is_save) {
+        if (strlen(filename_buffer) > 0) {
+          const std::string save_path = g_current_directory + "/" + filename_buffer;
+          save_file(save_path);
+          ImGui::CloseCurrentPopup();
+          g_show_save_dialog = false;
+        }
+      } else {
+        if (g_selected_file_index >= 0 &&
+            g_selected_file_index < static_cast<int>(g_directory_entries.size())) {
+          const std::string& name = g_directory_entries[g_selected_file_index];
+          const std::string full_path = g_current_directory + "/" + name;
+          if (!is_directory(full_path)) {
+            open_file(full_path);
+            ImGui::CloseCurrentPopup();
+            g_show_open_dialog = false;
+          }
+        }
+      }
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+      ImGui::CloseCurrentPopup();
+      if (is_save) {
+        g_show_save_dialog = false;
+      } else {
+        g_show_open_dialog = false;
+      }
+    }
+
+    ImGui::EndPopup();
+  }
+}
+
 }
 
 int main(int, char**) {
@@ -184,7 +411,12 @@ int main(int, char**) {
   g_undo_stack = std::make_unique<ps::core::UndoStack>();
   g_canvas = std::make_unique<ps::rendering::Canvas>();
   ps::tools::ToolManager::instance().register_default_tools();
-  create_test_image();
+
+  // Initialize image I/O with all supported formats
+  g_image_io = ps::io::create_default_image_io();
+
+  // Create initial document
+  new_document(800, 600);
 
   bool running = true;
   while (running) {
@@ -206,13 +438,63 @@ int main(int, char**) {
 
     if (ImGui::BeginMainMenuBar()) {
       if (ImGui::BeginMenu("File")) {
-        ImGui::MenuItem("New...", nullptr, false, false);
-        ImGui::MenuItem("Open...", nullptr, false, false);
-        ImGui::MenuItem("Save", nullptr, false, false);
-        ImGui::MenuItem("Save As...", nullptr, false, false);
+        static bool show_new_dialog = false;
+
+        if (ImGui::MenuItem("New...", "Ctrl+N")) {
+          show_new_dialog = true;
+        }
+        if (ImGui::MenuItem("Open...", "Ctrl+O")) {
+          g_show_open_dialog = true;
+        }
+        if (ImGui::MenuItem("Save", "Ctrl+S", false, !g_current_file_path.empty())) {
+          if (!g_current_file_path.empty()) {
+            save_file(g_current_file_path);
+          }
+        }
+        if (ImGui::MenuItem("Save As...", "Ctrl+Shift+S")) {
+          g_show_save_dialog = true;
+        }
         ImGui::Separator();
-        ImGui::MenuItem("Quit", nullptr, false, false);
+        if (ImGui::MenuItem("Quit", "Ctrl+Q")) {
+          running = false;
+        }
         ImGui::EndMenu();
+
+        // New Document Dialog
+        if (show_new_dialog) {
+          ImGui::OpenPopup("New Document");
+        }
+
+        ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+        if (ImGui::BeginPopupModal("New Document", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+          static int width = 800;
+          static int height = 600;
+
+          ImGui::InputInt("Width", &width);
+          ImGui::InputInt("Height", &height);
+
+          if (width < 1) width = 1;
+          if (height < 1) height = 1;
+          if (width > 8192) width = 8192;
+          if (height > 8192) height = 8192;
+
+          ImGui::Separator();
+
+          if (ImGui::Button("Create", ImVec2(120, 0))) {
+            new_document(width, height);
+            show_new_dialog = false;
+            ImGui::CloseCurrentPopup();
+          }
+          ImGui::SameLine();
+          if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            show_new_dialog = false;
+            ImGui::CloseCurrentPopup();
+          }
+
+          ImGui::EndPopup();
+        }
       }
       if (ImGui::BeginMenu("Edit")) {
         ImGui::MenuItem("Undo", nullptr, false, false);
@@ -641,6 +923,14 @@ int main(int, char**) {
       }
     }
     ImGui::End();
+
+    // File dialogs
+    if (g_show_open_dialog) {
+      show_file_dialog(false);
+    }
+    if (g_show_save_dialog) {
+      show_file_dialog(true);
+    }
 
     ImGui::Render();
     glViewport(0, 0, static_cast<int>(io.DisplaySize.x), static_cast<int>(io.DisplaySize.y));
